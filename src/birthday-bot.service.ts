@@ -14,7 +14,7 @@ export interface BirthdayConfig {
   timezone?: string;
   // New message types for different preparation periods
   twoWeeksMessages: string[]; // Messages for 2 weeks before birthday
-  oneWeekMessages: string[];  // Messages for 1 week before birthday
+  oneWeekMessages: string[]; // Messages for 1 week before birthday
 }
 
 @Injectable()
@@ -62,7 +62,7 @@ export class BirthdayBotService implements OnModuleInit {
           '🎈 Ще {days} {daysWord} до великого дня {name}. Бережемо сили для вечірки!',
           '🎊 Час летить! {days} {daysWord} — і стартує свято {name}.',
           '🌟 {days} {daysWord} до святкування {name}. Пора готувати привітання!',
-          '🎁 {days} {daysWord} до сюрпризів для {name}. Ідеї кидаємо в коментарі 🎯',
+          '🎁 {days} {daysWord} до сюрпризів для {name}! 🎯',
           '💃 {days} {daysWord} до вечірки. Плейлист і торт — на контролі!',
           '🎭 {days} {daysWord} — і завіса піднімається. Свято {name} близько!',
           '🎂 {days} {daysWord} до солодкого дня {name}. Не забудьте побажання!',
@@ -316,13 +316,17 @@ export class BirthdayBotService implements OnModuleInit {
     } else if (countdown.days <= 7) {
       // 4-7 days - randomly choose between urgent and regular messages (50/50 chance)
       const useUrgentMessages = Math.random() < 0.5;
-      messagePool = useUrgentMessages ? this.birthdayConfig.oneWeekMessages : this.birthdayConfig.dailyMessages;
+      messagePool = useUrgentMessages
+        ? this.birthdayConfig.oneWeekMessages
+        : this.birthdayConfig.dailyMessages;
       messageType = useUrgentMessages ? 'oneWeek' : 'daily';
     } else if (countdown.days <= 14) {
       // 2 weeks or less - gift preparation messages
       // Randomly choose between gift messages and regular messages (50/50 chance)
       const useGiftMessages = Math.random() < 0.5;
-      messagePool = useGiftMessages ? this.birthdayConfig.twoWeeksMessages : this.birthdayConfig.dailyMessages;
+      messagePool = useGiftMessages
+        ? this.birthdayConfig.twoWeeksMessages
+        : this.birthdayConfig.dailyMessages;
       messageType = useGiftMessages ? 'twoWeeks' : 'daily';
     } else {
       // More than 2 weeks - regular daily messages
@@ -358,7 +362,7 @@ export class BirthdayBotService implements OnModuleInit {
   private scheduleDailyMessages() {
     // Schedule daily message at 12 PM (noon) using Luxon timezone
     const timezone = this.birthdayConfig.timezone || 'Europe/Kyiv';
-    
+
     cron.schedule(
       '0 12 * * *',
       async () => {
@@ -455,19 +459,27 @@ export class BirthdayBotService implements OnModuleInit {
   }
 
   // Helper method to create timezone-aware cron expressions using Luxon
-  private createTimezoneAwareSchedule(cronExpression: string, callback: () => Promise<void>) {
+  private createTimezoneAwareSchedule(
+    cronExpression: string,
+    callback: () => Promise<void>,
+  ) {
     const timezone = this.birthdayConfig.timezone || 'Europe/Kyiv';
-    
+
     return cron.schedule(cronExpression, callback, {
       timezone: timezone,
     });
   }
 
   // Method to schedule a message at a specific DateTime
-  private scheduleAtDateTime(dateTime: DateTime, callback: () => Promise<void>) {
-    const now = DateTime.now().setZone(this.birthdayConfig.timezone || 'Europe/Kyiv');
+  private scheduleAtDateTime(
+    dateTime: DateTime,
+    callback: () => Promise<void>,
+  ) {
+    const now = DateTime.now().setZone(
+      this.birthdayConfig.timezone || 'Europe/Kyiv',
+    );
     const delay = dateTime.diff(now).milliseconds;
-    
+
     if (delay > 0) {
       setTimeout(async () => {
         try {
@@ -476,10 +488,12 @@ export class BirthdayBotService implements OnModuleInit {
           this.logger.error('Error in scheduled DateTime callback:', error);
         }
       }, delay);
-      
+
       this.logger.log(`Scheduled message for ${dateTime.toISO()}`);
     } else {
-      this.logger.warn(`Scheduled time ${dateTime.toISO()} is in the past, skipping`);
+      this.logger.warn(
+        `Scheduled time ${dateTime.toISO()} is in the past, skipping`,
+      );
     }
   }
 
@@ -487,10 +501,10 @@ export class BirthdayBotService implements OnModuleInit {
   private rescheduleMessages() {
     const timezone = this.birthdayConfig.timezone || 'Europe/Kyiv';
     const now = DateTime.now().setZone(timezone);
-    
+
     this.logger.log(`Rescheduling messages for timezone: ${timezone}`);
     this.logger.log(`Current time: ${now.toISO()}`);
-    
+
     // This could be used to dynamically reschedule based on timezone changes
     // For now, we'll keep the existing cron approach but with better timezone handling
   }
