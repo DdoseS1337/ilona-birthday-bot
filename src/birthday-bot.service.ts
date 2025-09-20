@@ -480,7 +480,7 @@ export class BirthdayBotService implements OnModuleInit {
       '* * * * *',
       async () => {
         this.logger.debug(
-          `Ping | Chat ID: ${this.birthdayConfig.chatId || 'N/A'} | Channel ID: ${this.birthdayConfig.channelId || 'N/A'} | Name: ${this.birthdayConfig.name || 'N/A'} | Birthday: ${this.birthdayConfig.birthday || 'N/A'}`
+          `Opa Ping | Chat ID: ${this.birthdayConfig.chatId || 'N/A'} | Channel ID: ${this.birthdayConfig.channelId || 'N/A'} | Name: ${this.birthdayConfig.name || 'N/A'} | Birthday: ${this.birthdayConfig.birthday || 'N/A'}`
         );
       },
       {
