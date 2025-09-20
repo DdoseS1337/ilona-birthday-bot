@@ -15,6 +15,10 @@ export interface BirthdayConfig {
   // New message types for different preparation periods
   twoWeeksMessages: string[]; // Messages for 2 weeks before birthday
   oneWeekMessages: string[]; // Messages for 1 week before birthday
+  // Channel information
+  channelId?: string; // Channel ID for sending messages
+  channelUsername?: string; // Channel username (e.g., @mychannel)
+  channelTitle?: string; // Channel title for display
 }
 
 @Injectable()
@@ -92,7 +96,7 @@ export class BirthdayBotService implements OnModuleInit {
     ];
 
     this.birthdayConfig = {
-      name: this.configService.get<string>('BIRTHDAY_NAME', 'Ілона'),
+      name: this.configService.get<string>('BIRTHDAY_NAME', 'Ілони'),
       birthday: this.configService.get<string>('BIRTHDAY_DATE', '11-2'),
       chatId: this.configService.get<string>('TELEGRAM_CHAT_ID'),
       dailyMessages: dailyMessages,
@@ -104,6 +108,12 @@ export class BirthdayBotService implements OnModuleInit {
       timezone: this.configService.get<string>('TIMEZONE', 'Europe/Kyiv'),
       twoWeeksMessages: twoWeeksMessages,
       oneWeekMessages: oneWeekMessages,
+      // Channel configuration
+      channelId: this.configService.get<string>('TELEGRAM_CHANNEL_ID'),
+      channelUsername: this.configService.get<string>(
+        'TELEGRAM_CHANNEL_USERNAME',
+      ),
+      channelTitle: this.configService.get<string>('TELEGRAM_CHANNEL_TITLE'),
     };
 
     // Debug logging
@@ -115,6 +125,16 @@ export class BirthdayBotService implements OnModuleInit {
     );
     this.logger.log(
       `- Birthday message: ${this.birthdayConfig.birthdayMessage.substring(0, 50)}...`,
+    );
+    this.logger.log(`- Chat ID: ${this.birthdayConfig.chatId || 'Not set'}`);
+    this.logger.log(
+      `- Channel ID: ${this.birthdayConfig.channelId || 'Not set'}`,
+    );
+    this.logger.log(
+      `- Channel Title: ${this.birthdayConfig.channelTitle || 'Not set'}`,
+    );
+    this.logger.log(
+      `- Channel Username: ${this.birthdayConfig.channelUsername || 'Not set'}`,
     );
   }
 
@@ -166,6 +186,9 @@ export class BirthdayBotService implements OnModuleInit {
     });
 
     this.bot.command('countdown', (ctx) => {
+      // Auto-detect and set chat/channel information when user uses countdown command
+      this.handleNewChat(ctx);
+
       const countdown = this.calculateCountdown();
       const message = this.formatCountdownMessage(countdown);
       if (message.trim()) {
@@ -174,9 +197,40 @@ export class BirthdayBotService implements OnModuleInit {
     });
 
     this.bot.command('help', (ctx) => {
-      const message = `Привіт, леді! 👋✨\n\nДоступні команди:\n/start - Запустити бота\n/countdown - Перевірити поточний підрахунок\n/help - Показати це повідомлення допомоги\n\nГарного дня! 💫`;
+      // Auto-detect and set chat/channel information when user uses help command
+      this.handleNewChat(ctx);
+
+      const message = `Привіт, леді! 👋✨\n\nДоступні команди:\n/start - Запустити бота\n/countdown - Перевірити поточний підрахунок\n/status - Показати статус конфігурації\n/help - Показати це повідомлення допомоги\n\nГарного дня! 💫`;
       if (message.trim()) {
         ctx.reply(message);
+      }
+    });
+
+    // Command to check current configuration
+    this.bot.command('status', (ctx) => {
+      // Auto-detect and set chat/channel information when user uses status command
+      this.handleNewChat(ctx);
+
+      const chatInfo = this.birthdayConfig.chatId
+        ? `✅ Chat ID: ${this.birthdayConfig.chatId}`
+        : '❌ Chat ID: Not set';
+      const channelInfo = this.birthdayConfig.channelId
+        ? `✅ Channel: ${this.birthdayConfig.channelTitle || 'Unknown'} (${this.birthdayConfig.channelId})`
+        : '❌ Channel: Not set';
+      const channelUsername = this.birthdayConfig.channelUsername
+        ? `Username: ${this.birthdayConfig.channelUsername}`
+        : 'Username: Not set';
+
+      const message = `📊 **Статус конфігурації бота:**\n\n${chatInfo}\n${channelInfo}\n${channelUsername}\n\n🎂 Birthday: ${this.birthdayConfig.name} (${this.birthdayConfig.birthday})\n⏰ Timezone: ${this.birthdayConfig.timezone}`;
+
+      ctx.reply(message);
+    });
+
+    // Handle any text message to auto-detect chat/channel
+    this.bot.on('text', (ctx) => {
+      // Only auto-detect if no chat/channel is configured yet
+      if (!this.birthdayConfig.chatId && !this.birthdayConfig.channelId) {
+        this.handleNewChat(ctx);
       }
     });
 
@@ -186,30 +240,68 @@ export class BirthdayBotService implements OnModuleInit {
 
   private handleNewChat(ctx: any) {
     const chatId = ctx.chat?.id?.toString();
-    if (chatId && !this.birthdayConfig.chatId) {
-      this.birthdayConfig.chatId = chatId;
-      this.logger.log(`Auto-detected chat ID: ${chatId}`);
+    const chatType = ctx.chat?.type;
+    const chatTitle = ctx.chat?.title;
+    const chatUsername = ctx.chat?.username;
 
-      // Send a welcome message with current countdown
-      setTimeout(async () => {
-        try {
-          const countdown = this.calculateCountdown();
-          const message = this.formatCountdownMessage(countdown);
+    if (chatId) {
+      let chatInfoUpdated = false;
+      let channelInfoUpdated = false;
 
-          // Validate message is not empty
-          if (message && message.trim() !== '') {
-            await ctx.reply(
-              `Привіт, леді! 👋✨\n\n📅 Поточний підрахунок:\n\n${message}`,
-            );
-          } else {
-            await ctx.reply(
-              `Привіт, леді! 👋✨\n\n📅 Поточний підрахунок:\n\n🎉 Тільки ${countdown.days} днів до дня народження ${this.birthdayConfig.name}! 🎂`,
-            );
+      // Store chat information (always update if not set)
+      if (!this.birthdayConfig.chatId) {
+        this.birthdayConfig.chatId = chatId;
+        this.logger.log(`Auto-detected chat ID: ${chatId}`);
+        chatInfoUpdated = true;
+      }
+
+      // If it's a channel, store channel information (always update for channels)
+      if (chatType === 'channel') {
+        const wasChannelSet = !!this.birthdayConfig.channelId;
+        this.birthdayConfig.channelId = chatId;
+        this.birthdayConfig.channelTitle = chatTitle;
+        this.birthdayConfig.channelUsername = chatUsername
+          ? `@${chatUsername}`
+          : undefined;
+
+        if (!wasChannelSet) {
+          this.logger.log(`Auto-detected channel: ${chatTitle} (${chatId})`);
+          if (chatUsername) {
+            this.logger.log(`Channel username: @${chatUsername}`);
           }
-        } catch (error) {
-          this.logger.error('Error sending welcome countdown:', error);
+          channelInfoUpdated = true;
+        } else {
+          this.logger.log(`Updated channel info: ${chatTitle} (${chatId})`);
+          channelInfoUpdated = true;
         }
-      }, 1000);
+      }
+
+      // Only send welcome message for new chats or when explicitly called
+      // This prevents spam when using /countdown or /help commands
+      const shouldSendWelcome = chatInfoUpdated || channelInfoUpdated;
+
+      if (shouldSendWelcome) {
+        // Send a welcome message with current countdown
+        setTimeout(async () => {
+          try {
+            const countdown = this.calculateCountdown();
+            const message = this.formatCountdownMessage(countdown);
+
+            // Validate message is not empty
+            if (message && message.trim() !== '') {
+              await ctx.reply(
+                `Привіт, леді! 👋✨\n\n📅 Поточний підрахунок:\n\n${message}`,
+              );
+            } else {
+              await ctx.reply(
+                `Привіт, леді! 👋✨\n\n📅 Поточний підрахунок:\n\n🎉 Тільки ${countdown.days} днів до дня народження ${this.birthdayConfig.name}! 🎂`,
+              );
+            }
+          } catch (error) {
+            this.logger.error('Error sending welcome countdown:', error);
+          }
+        }, 1000);
+      }
     }
   }
 
@@ -369,16 +461,10 @@ export class BirthdayBotService implements OnModuleInit {
         try {
           const countdown = this.calculateCountdown();
 
-          if (this.birthdayConfig.chatId) {
-            if (countdown.isBirthday) {
-              await this.sendBirthdayMessage();
-            } else {
-              await this.sendDailyCountdown(countdown);
-            }
+          if (countdown.isBirthday) {
+            await this.sendBirthdayMessage();
           } else {
-            this.logger.warn(
-              'No chat ID configured. Skipping scheduled message.',
-            );
+            await this.sendDailyCountdown(countdown);
           }
         } catch (error) {
           this.logger.error('Error sending scheduled message:', error);
@@ -389,52 +475,18 @@ export class BirthdayBotService implements OnModuleInit {
       },
     );
 
-    // Schedule hourly messages for the last day (when less than 24 hours remain)
-    // cron.schedule(
-    //   '0 * * * *', // Every hour
-    //   async () => {
-    //     try {
-    //       const countdown = this.calculateCountdown();
-
-    //       if (
-    //         this.birthdayConfig.chatId &&
-    //         countdown.days === 0 &&
-    //         countdown.hours <= 24
-    //       ) {
-    //         await this.sendHourlyCountdown(countdown);
-    //       }
-    //     } catch (error) {
-    //       this.logger.error('Error sending hourly countdown:', error);
-    //     }
-    //   },
-    //   {
-    //     timezone: timezone,
-    //   },
-    // );
-
-    // // Schedule messages every 10 minutes in the last hour
-    // cron.schedule(
-    //   '*/10 * * * *', // Every 10 minutes
-    //   async () => {
-    //     try {
-    //       const countdown = this.calculateCountdown();
-
-    //       if (
-    //         this.birthdayConfig.chatId &&
-    //         countdown.days === 0 &&
-    //         countdown.hours === 0 &&
-    //         countdown.minutes <= 60
-    //       ) {
-    //         await this.sendHourlyCountdown(countdown);
-    //       }
-    //     } catch (error) {
-    //       this.logger.error('Error sending 10-minute countdown:', error);
-    //     }
-    //   },
-    //   {
-    //     timezone: timezone,
-    //   },
-    // );
+    // Schedule a cron job to run every minute
+    cron.schedule(
+      '* * * * *',
+      async () => {
+        this.logger.debug(
+          `Ping | Chat ID: ${this.birthdayConfig.chatId || 'N/A'} | Channel ID: ${this.birthdayConfig.channelId || 'N/A'} | Name: ${this.birthdayConfig.name || 'N/A'} | Birthday: ${this.birthdayConfig.birthday || 'N/A'}`
+        );
+      },
+      {
+        timezone: timezone,
+      },
+    );
 
     // Schedule birthday message at exactly 00:01
     cron.schedule(
@@ -443,7 +495,7 @@ export class BirthdayBotService implements OnModuleInit {
         try {
           const countdown = this.calculateCountdown();
 
-          if (this.birthdayConfig.chatId && countdown.isBirthday) {
+          if (countdown.isBirthday) {
             await this.sendBirthdayMessage();
           }
         } catch (error) {
@@ -517,11 +569,6 @@ export class BirthdayBotService implements OnModuleInit {
   }) {
     const message = this.formatCountdownMessage(countdown);
 
-    if (!this.birthdayConfig.chatId) {
-      this.logger.warn('No chat ID configured. Cannot send daily countdown.');
-      return;
-    }
-
     // Validate message is not empty
     if (!message || message.trim() === '') {
       this.logger.error('Message is empty, skipping send');
@@ -529,7 +576,7 @@ export class BirthdayBotService implements OnModuleInit {
     }
 
     try {
-      await this.bot.telegram.sendMessage(this.birthdayConfig.chatId, message);
+      await this.sendMessageToChannel(message);
       this.logger.log(`Daily countdown sent: ${countdown.days} days remaining`);
     } catch (error) {
       this.logger.error('Error sending daily countdown:', error);
@@ -544,11 +591,6 @@ export class BirthdayBotService implements OnModuleInit {
   }) {
     const message = this.formatCountdownMessage(countdown);
 
-    if (!this.birthdayConfig.chatId) {
-      this.logger.warn('No chat ID configured. Cannot send hourly countdown.');
-      return;
-    }
-
     // Validate message is not empty
     if (!message || message.trim() === '') {
       this.logger.error('Message is empty, skipping send');
@@ -556,7 +598,7 @@ export class BirthdayBotService implements OnModuleInit {
     }
 
     try {
-      await this.bot.telegram.sendMessage(this.birthdayConfig.chatId, message);
+      await this.sendMessageToChannel(message);
       this.logger.log(
         `Hourly countdown sent: ${countdown.hours} hours remaining`,
       );
@@ -566,11 +608,6 @@ export class BirthdayBotService implements OnModuleInit {
   }
 
   private async sendBirthdayMessage() {
-    if (!this.birthdayConfig.chatId) {
-      this.logger.warn('No chat ID configured. Cannot send birthday message.');
-      return;
-    }
-
     try {
       // Prepare birthday message
       const birthdayMessage =
@@ -586,17 +623,11 @@ export class BirthdayBotService implements OnModuleInit {
       }
 
       // Send birthday message
-      await this.bot.telegram.sendMessage(
-        this.birthdayConfig.chatId,
-        birthdayMessage,
-      );
+      await this.sendMessageToChannel(birthdayMessage);
 
       // Send birthday GIF if configured
       if (this.birthdayConfig.birthdayGifUrl) {
-        await this.bot.telegram.sendAnimation(
-          this.birthdayConfig.chatId,
-          this.birthdayConfig.birthdayGifUrl,
-        );
+        await this.sendAnimationToChannel(this.birthdayConfig.birthdayGifUrl);
       }
 
       this.logger.log('Birthday message sent successfully!');
@@ -605,11 +636,61 @@ export class BirthdayBotService implements OnModuleInit {
     }
   }
 
+  // Method to send message to channel (preferred) or chat
+  private async sendMessageToChannel(message: string) {
+    const targetId =
+      this.birthdayConfig.channelId || this.birthdayConfig.chatId;
+
+    if (!targetId) {
+      this.logger.warn(
+        'No channel ID or chat ID configured. Cannot send message.',
+      );
+      return;
+    }
+
+    try {
+      await this.bot.telegram.sendMessage(targetId, message);
+      const channelInfo =
+        this.birthdayConfig.channelTitle ||
+        this.birthdayConfig.channelUsername ||
+        'channel';
+      this.logger.log(`Message sent to ${channelInfo} (${targetId})`);
+    } catch (error) {
+      this.logger.error(`Error sending message to ${targetId}:`, error);
+      throw error;
+    }
+  }
+
+  // Method to send animation to channel (preferred) or chat
+  private async sendAnimationToChannel(animationUrl: string) {
+    const targetId =
+      this.birthdayConfig.channelId || this.birthdayConfig.chatId;
+
+    if (!targetId) {
+      this.logger.warn(
+        'No channel ID or chat ID configured. Cannot send animation.',
+      );
+      return;
+    }
+
+    try {
+      await this.bot.telegram.sendAnimation(targetId, animationUrl);
+      const channelInfo =
+        this.birthdayConfig.channelTitle ||
+        this.birthdayConfig.channelUsername ||
+        'channel';
+      this.logger.log(`Animation sent to ${channelInfo} (${targetId})`);
+    } catch (error) {
+      this.logger.error(`Error sending animation to ${targetId}:`, error);
+      throw error;
+    }
+  }
+
   // Method to manually trigger countdown check
   async checkAndSendCountdown() {
     const countdown = this.calculateCountdown();
 
-    if (this.birthdayConfig.chatId) {
+    if (this.birthdayConfig.channelId || this.birthdayConfig.chatId) {
       if (countdown.isBirthday) {
         await this.sendBirthdayMessage();
       } else if (countdown.days === 0 && countdown.hours <= 24) {
@@ -618,7 +699,9 @@ export class BirthdayBotService implements OnModuleInit {
         await this.sendDailyCountdown(countdown);
       }
     } else {
-      this.logger.warn('No chat ID configured. Cannot send countdown message.');
+      this.logger.warn(
+        'No channel ID or chat ID configured. Cannot send countdown message.',
+      );
     }
   }
 
@@ -637,5 +720,36 @@ export class BirthdayBotService implements OnModuleInit {
   setChatId(chatId: string) {
     this.birthdayConfig.chatId = chatId;
     this.logger.log(`Chat ID set to: ${chatId}`);
+  }
+
+  // Method to get current channel information
+  getCurrentChannelInfo(): { id?: string; title?: string; username?: string } {
+    return {
+      id: this.birthdayConfig.channelId,
+      title: this.birthdayConfig.channelTitle,
+      username: this.birthdayConfig.channelUsername,
+    };
+  }
+
+  // Method to set channel information manually
+  setChannelInfo(
+    channelId: string,
+    channelTitle?: string,
+    channelUsername?: string,
+  ) {
+    this.birthdayConfig.channelId = channelId;
+    this.birthdayConfig.channelTitle = channelTitle;
+    this.birthdayConfig.channelUsername = channelUsername;
+    this.logger.log(
+      `Channel info set: ${channelTitle || 'Unknown'} (${channelId})`,
+    );
+    if (channelUsername) {
+      this.logger.log(`Channel username: ${channelUsername}`);
+    }
+  }
+
+  // Method to get the preferred target (channel first, then chat)
+  getPreferredTarget(): string | undefined {
+    return this.birthdayConfig.channelId || this.birthdayConfig.chatId;
   }
 }
