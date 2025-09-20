@@ -41,7 +41,7 @@ devDependencies:
     specifier: ^9.18.0
     version: 9.36.0
   '@nestjs/cli':
-    specifier: ^11.0.0
+    specifier: ^11.0.10
     version: 11.0.10(@swc/cli@0.6.0)(@swc/core@1.13.5)(@types/node@22.18.6)
   '@nestjs/schematics':
     specifier: ^11.0.0
@@ -65,7 +65,7 @@ devDependencies:
     specifier: ^3.7.1
     version: 3.7.1
   '@types/node':
-    specifier: ^22.10.7
+    specifier: ^22.18.6
     version: 22.18.6
   '@types/node-cron':
     specifier: ^3.0.11
@@ -91,6 +91,9 @@ devDependencies:
   prettier:
     specifier: ^3.4.2
     version: 3.6.2
+  rimraf:
+    specifier: ^6.0.1
+    version: 6.0.1
   source-map-support:
     specifier: ^0.5.21
     version: 0.5.21
@@ -110,7 +113,7 @@ devDependencies:
     specifier: ^4.2.0
     version: 4.2.0
   typescript:
-    specifier: ^5.7.3
+    specifier: ^5.9.2
     version: 5.9.2
   typescript-eslint:
     specifier: ^8.20.0
@@ -5280,6 +5283,15 @@ packages:
   /reusify@1.1.0:
     resolution: {integrity: sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw==}
     engines: {iojs: '>=1.0.0', node: '>=0.10.0'}
+    dev: true
+
+  /rimraf@6.0.1:
+    resolution: {integrity: sha512-9dkvaxAsk/xNXSJzMgFqqMCuFgt2+KsOFek3TMLfo8NCPfWpBmqwyNn5Y+NX56QUYfCtsyhF3ayiboEoUmJk/A==}
+    engines: {node: 20 || >=22}
+    hasBin: true
+    dependencies:
+      glob: 11.0.3
+      package-json-from-dist: 1.0.1
     dev: true
 
   /router@2.2.0:
