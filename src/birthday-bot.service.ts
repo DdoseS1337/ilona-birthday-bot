@@ -61,16 +61,43 @@ export class BirthdayBotService implements OnModuleInit {
     const dailyMessages = dailyMessagesEnv
       ? dailyMessagesEnv.split('|')
       : [
-          '🎉 Лічильник працює: лишилось {days} {daysWord} до дня народження {name}. Готуємось!',
-          '⏳ {days} {daysWord} — і святкуємо {name}! Плануємо сюрпризи 😉',
-          '🎈 Ще {days} {daysWord} до великого дня {name}. Бережемо сили для вечірки!',
-          '🎊 Час летить! {days} {daysWord} — і стартує свято {name}.',
-          '🌟 {days} {daysWord} до святкування {name}. Пора готувати привітання!',
-          '🎁 {days} {daysWord} до сюрпризів для {name}! 🎯',
-          '💃 {days} {daysWord} до вечірки. Плейлист і торт — на контролі!',
-          '🎭 {days} {daysWord} — і завіса піднімається. Свято {name} близько!',
-          '🎂 {days} {daysWord} до солодкого дня {name}. Не забудьте побажання!',
-          '📅 {days} {daysWord} — тримаємо фокус на дні народження {name}!',
+        '🎂 У день народження я завжди загадую бажання. Цього року — щоб ніхто не рахував свічки. 😄',
+        '🧠 Кажуть, з віком приходить мудрість. Ага, тільки в гості приходять ще й біль у спині та підозрілий лікар. 🩺',
+        '🔥 Торт на мій день народження — єдине місце, де вогонь і цукор співіснують мирно. 🍰',
+        '💎 З віком я менше мрію про діаманти, а більше — про додатковий вихідний. 😴',
+        '🍽️ Мій день народження — це коли всі бажають щастя, а я таємно бажаю, щоб хоч хтось помив посуд після гостей. 🧽',
+        '📖 Хтось отримує в подарунок квіти, хтось — прикраси. А я хочу інструкцію з життя. 📚',
+        '🍷 З роками я стаю кращою, як вино. Правда, від мене вже іноді теж болить голова. 🤕',
+        '🌅 Мій день народження — єдиний день, коли можна офіційно їсти торт на сніданок. 🥞',
+        '🔢 Кажуть, «вік — це лише цифра». Але чому ця цифра так уперто росте? 📈',
+        '🎁 У дитинстві я чекала подарунків. У дорослому віці чекаю, коли вже можна лягти спати. 😴',
+        '🔇 Найкращий подарунок на мій день народження — це коли сусіди не свердлять. 🏠',
+        '🕯️ Мій торт із багатьма свічками: красиво, але ризик пожежі зростає щороку. 🚨',
+        '🧘 З роками починаю цінувати спокій більше, ніж прикраси. ✨',
+        '📅 День народження — це нагадування від календаря: «Не забудь, ти ще жива!» 💪',
+        '🏠 У дитинстві: «Ура, мені подарували ляльку!» У дорослому житті: «Ура, мені подарували ремонт квартири!» 🔨',
+        '💐 У мене два типи гостей: одні дарують квіти, інші — конверти. Я люблю і тих, і тих, але другі пахнуть вигідніше. 💰',
+        '📱 Мій день народження — це коли подруги змагаються, хто пошле найдовше побажання у вайбер. 💬',
+        '🧸 Раніше хотіла іграшки. Тепер — щоб спина не боліла. 🏥',
+        '🕯️ З роками свічок на торті стає більше, ніж самого торта. 🎂',
+        '🥂 Найкращий тост на святі: «Щоб ми зустрічалися тільки на таких приємних подіях!» І ніхто не додає: «...але рідше». 😅',
+        '👥 У дитинстві я рахувала дні до свята. У дорослому житті рахую, скільки гостей вміститься на кухні. 🏠',
+        '☕ З віком подарунки стають практичнішими. Нещодавно мені подарували каву — і це було геніально. 🤩',
+        '🍰 Мій день народження — це єдиний день, коли ніхто не свариться, що я з\'їла останній шматочок торта. 😋',
+        '⚖️ Краще мати зайві кілограми від святкового торта, ніж зайві нерви від святкового застілля. 😌',
+        '⏰ У дитинстві: «Хочу стати старшою». У дорослому віці: «Поверніть назад мої 20!» 🔄',
+        '📱 Мій день народження — це як апдейт у телефоні: чекаю нових можливостей, а отримую нові глюки. 🐛',
+        '🏖️ Мій улюблений подарунок? Вихідний день. 😎',
+        '🎉 День народження — це єдиний день, коли слово «старієш» звучить як комплімент. 💫',
+        '🕯️ Кажуть: «Не рахуйте років». Легко сказати, коли свічки на торті світлять як маяк. 🚨',
+        '🏛️ Мій день народження — це коли подруги нагадують мені, що я ще не музейний експонат. 😄',
+        '🎁 З віком найбільший сюрприз — це коли подруги ще пам\'ятають дату мого дня народження. 🤗',
+        '🍽️ Подарунки бувають різні: матеріальні, емоційні, і той, що завжди дарує мама — «Ти поїла?» 👩‍🍳',
+        '❄️ Мій день народження — це коли навіть холодильник святкує разом зі мною. 🎊',
+        '🎈 У дитинстві мій день народження — це кульки й конфетті. У дорослому житті — чеки й квитанції. 🧾',
+        '📶 Найважливіше в день народження — щоб вай-фай працював для всіх гостей. 📱',
+        '👑 Мій день народження — це єдиний день, коли я одночасно героїня вечора і головна спонсорка свята. 💸',
+        '⏳ Найбільше в день народження мене радує те, що наступний буде ще не скоро. 😅',
         ];
 
     // Messages for 2 weeks before birthday (gift preparation phase)
@@ -401,30 +428,31 @@ export class BirthdayBotService implements OnModuleInit {
     let messagePool: string[] = [];
     let messageType = '';
 
-    if (countdown.days <= 3) {
-      // 3 days or less - only regular daily messages
-      messagePool = this.birthdayConfig.dailyMessages;
-      messageType = 'daily';
-    } else if (countdown.days <= 7) {
-      // 4-7 days - randomly choose between urgent and regular messages (50/50 chance)
-      const useUrgentMessages = Math.random() < 0.5;
-      messagePool = useUrgentMessages
-        ? this.birthdayConfig.oneWeekMessages
-        : this.birthdayConfig.dailyMessages;
-      messageType = useUrgentMessages ? 'oneWeek' : 'daily';
-    } else if (countdown.days <= 14) {
-      // 2 weeks or less - gift preparation messages
-      // Randomly choose between gift messages and regular messages (50/50 chance)
-      const useGiftMessages = Math.random() < 0.5;
-      messagePool = useGiftMessages
-        ? this.birthdayConfig.twoWeeksMessages
-        : this.birthdayConfig.dailyMessages;
-      messageType = useGiftMessages ? 'twoWeeks' : 'daily';
-    } else {
-      // More than 2 weeks - regular daily messages
-      messagePool = this.birthdayConfig.dailyMessages;
-      messageType = 'daily';
-    }
+    // if (countdown.days <= 3) {
+    //   // 3 days or less - only regular daily messages
+    //   messagePool = this.birthdayConfig.dailyMessages;
+    //   messageType = 'daily';
+    // } else if (countdown.days <= 7) {
+    //   // 4-7 days - randomly choose between urgent and regular messages (50/50 chance)
+    //   const useUrgentMessages = Math.random() < 0.5;
+    //   messagePool = useUrgentMessages
+    //     ? this.birthdayConfig.oneWeekMessages
+    //     : this.birthdayConfig.dailyMessages;
+    //   messageType = useUrgentMessages ? 'oneWeek' : 'daily';
+    // } else if (countdown.days <= 14) {
+    //   // 2 weeks or less - gift preparation messages
+    //   // Randomly choose between gift messages and regular messages (50/50 chance)
+    //   const useGiftMessages = Math.random() < 0.5;
+    //   messagePool = useGiftMessages
+    //     ? this.birthdayConfig.twoWeeksMessages
+    //     : this.birthdayConfig.dailyMessages;
+    //   messageType = useGiftMessages ? 'twoWeeks' : 'daily';
+    // } else {
+    //   // More than 2 weeks - regular daily messages
+
+    // }
+    messagePool = this.birthdayConfig.dailyMessages;
+    messageType = 'daily';
 
     // Ensure we have messages
     if (!messagePool || messagePool.length === 0) {
@@ -437,10 +465,24 @@ export class BirthdayBotService implements OnModuleInit {
 
     this.logger.debug(`Selected ${messageType} message: "${randomMessage}"`);
 
-    const formattedMessage = randomMessage
-      .replace('{days}', countdown.days.toString())
-      .replace('{daysWord}', this.daysWord(countdown.days))
-      .replace('{name}', this.birthdayConfig.name);
+    // Format message with parameters
+    let formattedMessage = randomMessage;
+    
+    // Replace parameters if they exist in the message
+    if (formattedMessage.includes('{days}')) {
+      formattedMessage = formattedMessage.replace('{days}', countdown.days.toString());
+    }
+    if (formattedMessage.includes('{daysWord}')) {
+      formattedMessage = formattedMessage.replace('{daysWord}', this.daysWord(countdown.days));
+    }
+    if (formattedMessage.includes('{name}')) {
+      formattedMessage = formattedMessage.replace('{name}', this.birthdayConfig.name);
+    }
+    
+    // Add countdown info to messages that don't have parameters
+    if (!formattedMessage.includes('{days}') && !formattedMessage.includes('{daysWord}')) {
+      formattedMessage = `📅 ${countdown.days} ${this.daysWord(countdown.days)} до дня народження ${this.birthdayConfig.name}! 🎂\n\n${formattedMessage}`;
+    }
 
     this.logger.debug(`Formatted message: "${formattedMessage}"`);
 
