@@ -28,6 +28,7 @@ export class BirthdayBotService implements OnModuleInit {
   private birthdayConfig: BirthdayConfig;
 
   private timezone: string;
+  private currentRiddleIndex: number = 0; // Лічильник для послідовного вибору загадок
   constructor(private configService: ConfigService) {
     this.bot = new Telegraf(
       this.configService.get<string>('TELEGRAM_BOT_TOKEN')!,
@@ -62,10 +63,9 @@ export class BirthdayBotService implements OnModuleInit {
       ? dailyMessagesEnv.split('|')
       : [
           '🏢 У 12-поверховому будинку є ліфт. На першому поверсі живе всього 2 людей, від поверху до поверху кількість мешканців збільшується вдвічі. На якому поверсі частіше натискають кнопку виклику ліфта?',
-          '🔗 Ковалю принесли п’ять ланцюгів, по три кільця в кожному, і доручили з’єднати їх в один ланцюг. Він вирішив розкрити чотири кільця й знову їх закувати. Чи можна зробити це, розкривши менше кілець?',
+          '🔗 Ковалю принесли п\'ять ланцюгів, по три кільця в кожному, і доручили з\'єднати їх в один ланцюг. Він вирішив розкрити чотири кільця й знову їх закувати. Чи можна зробити це, розкривши менше кілець?',
           '🐺 Це відоме завдання про селянина, вовка, козла й капусту. Як перевезти всіх через ріку човном, що вміщує лише одного пасажира?',
           '🛶 Три аматори водного спорту мають один човен і тримають його на ланцюгу з трьома замками. У кожного лише один ключ, але кожен може взяти човен самостійно. Як це можливо?',
-          '🦆 Від чого качка пливе?',
           '☔ Чоловік потрапив під зливу, але не одна волосина на голові не промокла. Чому?',
           '👒 Що трапиться з білою панамою, якщо її опустити на дно озера на 3 хвилини 20 секунд?',
           '👨‍👩‍👦 У сімох братів по сестрі. Скільки всього сестер?',
@@ -80,33 +80,16 @@ export class BirthdayBotService implements OnModuleInit {
           '⏰ Який годинник показує правильний час лише двічі на добу?',
           '🚦 Що треба робити, коли бачиш зеленого чоловічка?',
           '🔥 Жувати не жую, а все поїдаю, все тільки їм, а з голоду помираю.',
-          '💧 Не п’є — живе, а нап’ється — умре.',
+          '💧 Не п\'є — живе, а нап\'ється — умре.',
           '🤫 Не видно її і не чути її, а коли заговориш про неї, то вона зразу зникає.',
           '🌫️ Простелилось простирадло на весь світ — не дістане і не зложить весь мій рід.',
           '🌾 Рівненька дорожка, посилана горошком.',
           '🐑 Вівці день і ніч пасуться, а молока не дають.',
         ];
-    // Messages for 2 weeks before birthday (gift preparation phase)
-    const twoWeeksMessages = [
-      '🎁 {days} {daysWord} до дня народження {name}! Час почати думати про подаруночки! 💝',
-      '🛍️ {days} {daysWord} — ідеальний час для пошуку особливого подарунка для {name}! ✨',
-      '💝 {days} {daysWord} до свята {name}. Можливо, варто зазирнути в магазини? 🛒',
-      '🎯 {days} {daysWord} до дня народження {name}! Пора складати список подарунків! 📝',
-      '🛒 {days} {daysWord} — час для шопінгу! Що б зробити {name} приємно? 🤔',
-      '💎 {days} {daysWord} до свята {name}. Час шукати щось особливе! ✨',
-      '🎨 {days} {daysWord} до дня народження {name}! Можливо, створити щось власноруч? 🖌️',
-    ];
 
-    // Messages for 1 week before birthday (urgent preparation phase)
-    const oneWeekMessages = [
-      '🚨 {days} {daysWord} до дня народження {name}! Хто ще не встиг купити подарунок — час діяти! ⏰',
-      '⚡ {days} {daysWord} — останній тиждень! Подарунки треба купувати зараз! 🛍️',
-      '🔥 {days} {daysWord} до свята {name}! Останній шанс для ідеального подарунка! 💝',
-      '⏰ {days} {daysWord} — терміново! Подарунки, привітання, все треба готувати! 🎁',
-      '🚀 {days} {daysWord} до дня народження {name}! Останній тиждень підготовки! 💪',
-      '💥 {days} {daysWord} — фінальний спурт! Всі подарунки мають бути готові! 🎯',
-      '⚡ {days} {daysWord} до свята {name}! Час дій — залишився лише тиждень! 🎊',
-    ];
+    // Ініціалізуємо порожні масиви для повідомлень (якщо не використовуються)
+    const twoWeeksMessages: string[] = [];
+    const oneWeekMessages: string[] = [];
 
     this.birthdayConfig = {
       name: this.configService.get<string>('BIRTHDAY_NAME', 'Ілони'),
@@ -355,13 +338,11 @@ export class BirthdayBotService implements OnModuleInit {
     }
 
     const diff = target.diff(now, ['days', 'hours', 'minutes']).toObject();
-    const totalMinutes = Math.max(
-      0,
-      Math.floor(target.diff(now, 'minutes').minutes || 0),
-    );
-    const days = Math.floor(totalMinutes / (60 * 24));
-    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-    const minutes = totalMinutes % 60;
+    
+    // Використовуємо точний розрахунок з Luxon для днів
+    const days = Math.max(0, Math.floor(diff.days || 0));
+    const hours = Math.max(0, Math.floor(diff.hours || 0));
+    const minutes = Math.max(0, Math.floor(diff.minutes || 0));
 
     const isBirthday =
       now.year === target.year &&
@@ -446,13 +427,16 @@ export class BirthdayBotService implements OnModuleInit {
       return `Привіт, леді! 👋✨\n\n🎉 Тільки ${countdown.days} днів до дня народження ${this.birthdayConfig.name}! 🎂\n\nНе можу дочекатися свята! 💫`;
     }
 
-    const randomMessage =
-      messagePool[Math.floor(Math.random() * messagePool.length)];
+    // Послідовний вибір загадок по колу
+    const selectedMessage = messagePool[this.currentRiddleIndex];
+    
+    // Переходимо до наступної загадки, циклічно повертаючись до початку
+    this.currentRiddleIndex = (this.currentRiddleIndex + 1) % messagePool.length;
 
-    this.logger.debug(`Selected ${messageType} message: "${randomMessage}"`);
+    this.logger.debug(`Selected ${messageType} message (index ${this.currentRiddleIndex === 0 ? messagePool.length - 1 : this.currentRiddleIndex - 1}): "${selectedMessage}"`);
 
     // Format message with parameters
-    let formattedMessage = randomMessage;
+    let formattedMessage = selectedMessage;
 
     // Replace parameters if they exist in the message
     if (formattedMessage.includes('{days}')) {
